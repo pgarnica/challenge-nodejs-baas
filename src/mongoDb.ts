@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import  dotenv from 'dotenv'
 
 const options : any = {
     useNewUrlParser: true,
@@ -10,8 +11,8 @@ const options : any = {
     mongoose,
     connect: () => {
       mongoose.Promise = Promise
-      console.log("connected do database")
-      return mongoose.connect('mongodb://localhost:27017/challangeBaas',options)
+      dotenv.config();
+      return mongoose.connect('mongodb://' + (process.env.MONGODB_LOCAL|| 'localhost'),options)
     },
     disconnect: (done: any) => {
       mongoose.disconnect(done)

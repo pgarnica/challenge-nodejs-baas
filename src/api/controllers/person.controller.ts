@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { IPersonDto, Person } from "../models/person";
+import { IAccountDto, Account } from "../models/account";
+import {encrypt} from '../../crypto'
 
 const validateUniqueFields =  async (email:string, cpf:string) =>
 {
@@ -20,7 +22,7 @@ class PersonController {
 
   async post(req: Request, res: Response) {
     try {
-      const { email, cpf } = req.body;
+      const { email, cpf, password } = req.body;
 
       //check if already exists person with the given email and cpf
       var  validation = await validateUniqueFields(email,cpf);
@@ -31,6 +33,17 @@ class PersonController {
       }
        
       const person = await Person.create(req.body);
+      if(person)
+      {
+        const accountDto: IAccountDto =
+        {
+          name : email,
+          balance: 0,
+          password: encrypt(password),
+          person : person._id
+        }
+        await Account.create(accountDto);
+      }
 
       return res.status(201).json(person);
     } catch (error) {
@@ -51,6 +64,9 @@ class PersonController {
         cpf:person.cpf
       };
       res.status(200).json({ person: personDto });
+    }else
+    {
+      res.status(404).send("Person not found.");
     }
   }
 
