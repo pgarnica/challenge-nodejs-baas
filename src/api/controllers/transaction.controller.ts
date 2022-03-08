@@ -11,17 +11,17 @@ class TransactionController {
 
       const senderObject = await Person.findById(sender);
       if (!senderObject) {
-        return res.status(404).send("Sender not found");
+        return res.status(404).json({"message": "Sender not found"});
       }
 
       const recieverObject = await Person.findById(reciever);
       if (!recieverObject) {
-        return res.status(404).send("Receiver not found");
+        return res.status(404).json({"message": "Receiver not found"});
       }
 
       const accountSender = await Account.findOne({ person: sender });
       if (accountSender.balance < amount) {
-        return res.status(400).send("Not enought balance to transfer");
+        return res.status(400).json({"message": "Not enought balance to transfer"});
       }
 
       const accountReciever = await Account.findOne({ person: reciever });
@@ -39,13 +39,8 @@ class TransactionController {
 
       return res
         .status(200)
-        .send(
-          senderObject.name +
-            " transfered " +
-            amount +
-            " to " +
-            recieverObject.name
-        );
+        .json({"message" : senderObject.name +" transfered " + amount +
+                           " to " + recieverObject.name});
     } catch (error) {
       const { code, message }: any = error;
       return res.status(400).json({ code, message });

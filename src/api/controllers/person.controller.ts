@@ -3,20 +3,37 @@ import { IPersonDto, Person } from "../models/person";
 import { IAccountDto, Account } from "../models/account";
 import { encrypt } from "../../crypto";
 
-const validateUniqueFields = async (email: string, cpf: string) => {
-  if (await Person.findOne({ email })) {
-    return {
-      status: 400,
-      message: "There is already a person with the given email!",
-    };
-  } else if (await Person.findOne({ cpf })) {
-    return {
-      status: 400,
-      message: "There is already a person with the given CPF!",
-    };
-  } else {
-    return { status: 200, message: "Ok!" };
+const validateUniqueFields = async (email: string, cpf: string, id?:string) => {
+
+  const personEmailFinder= await Person.findOne({ email }); 
+
+  if(personEmailFinder)
+  { 
+    if(id && personEmailFinder._id.toString() !==id)
+    {
+      return { status: 400, message: "There is already a person with the given email!"};
+    }
+    else if(!id)
+    {
+      return { status: 400, message: "There is already a person with the given email!"};
+    }
   }
+   
+  const personCpfFinder= await Person.findOne({ cpf }); 
+
+  if(personCpfFinder)
+  {
+    if(id && personCpfFinder._id.toString() !==id)
+    {
+      return { status: 400, message: "There is already a person with the given CPF!"};
+    }
+    else if(!id)
+    {
+      return { status: 400, message: "There is already a person with the given CPF!"};
+    }
+  }
+  
+  return { status: 200, message: "Ok!" };
 };
 
 class PersonController {
@@ -27,7 +44,7 @@ class PersonController {
       const { email, cpf, password } = req.body;
 
       //check if already exists person with the given email and cpf
-      var validation = await validateUniqueFields(email, cpf);
+      var validation = await validateUniqueFields(email, cpf, undefined);
 
       if (validation.status !== 200) {
         return res
@@ -65,9 +82,9 @@ class PersonController {
           email: person.email,
           cpf: person.cpf,
         };
-        res.status(200).json({ person: personDto });
+        return res.status(200).json( personDto );
       } else {
-        res.status(404).send("Person not found.");
+        return res.status(404).json({"message": "Person not found."});
       }
     } catch (error) {
       const { code, message }: any = error;
@@ -80,9 +97,22 @@ class PersonController {
     try {
       const persons = await Person.find();
       if (persons) {
-        res.status(200).json({ persons: persons });
+
+        let personsDtos = [] as IPersonDto[]
+        persons.forEach(person => {
+          const personDto: IPersonDto = {
+              name : person.name,
+              gender: person.gender,
+              birthDate : person.birthDate.toLocaleDateString(),
+              email: person.email,
+              cpf: person.cpf
+          };
+          personsDtos.push(personDto);
+        });
+
+        return res.status(200).json({ persons: personsDtos });
       } else {
-        res.status(404).send("There is no person data.");
+        return res.status(404).json({"message":"There is no person data."});
       }
     } catch (error) {
       const { code, message }: any = error;
@@ -95,13 +125,13 @@ class PersonController {
     try {
       const { id } = req.params;
       if (!id) {
-        res.status(400).send("The Id parameter is mandatory.");
+        return res.status(400).json({"message": "The Id parameter is mandatory."});
       }
 
       const { email, cpf } = req.body;
 
       //check if already exists person with the given email and cpf
-      var validation = await validateUniqueFields(email, cpf);
+      var validation = await validateUniqueFields(email, cpf, id);
 
       if (validation.status !== 200) {
         return res
@@ -115,9 +145,9 @@ class PersonController {
       });
 
       if (person) {
-        res.status(200).json({ person });
+        return res.status(200).json({ person });
       } else {
-        res.status(404).send("Person not found.");
+        res.status(404).json({"message" : "Person not found."});
       }
     } catch (error) {
       const { code, message }: any = error;
@@ -130,15 +160,15 @@ class PersonController {
     try {
       const { id } = req.params;
       if (!id) {
-        res.status(400).send("The Id parameter is mandatory.");
+        return res.status(400).json({"message": "The Id parameter is mandatory."});
       }
 
       const person = await Person.findOneAndDelete({ _id: id });
 
       if (person) {
-        res.status(200).send("Person successfully deleted");
+        res.status(200).json({"message": "Person successfully deleted"});
       } else {
-        res.status(404).send("Person not found.");
+        res.status(404).json({"message": "Person not found."});
       }
     } catch (error) {
       const { code, message }: any = error;

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { validateCPF } from "../Helpers/Validations.helper";
+import { validateCPF } from "../helpers/validations.helper";
 
 export interface IPersonDto {
     name:string;
